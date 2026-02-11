@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import * as ShaderComponents from 'shaders/react'
 import PropControl from './PropControl'
+import ShaderErrorBoundary from './ShaderErrorBoundary'
 
-const { Shader } = ShaderComponents
+const { Shader, Checkerboard } = ShaderComponents
 
 export default function ShaderDetail({ shader, onBack }) {
   // Initialize props with defaults
@@ -103,32 +104,24 @@ export default function ShaderDetail({ shader, onBack }) {
         {/* Shader preview */}
         <div className="flex-1 relative bg-black">
           {Component && !shader.requiresChild ? (
-            <ErrorBoundary fallback={<ShaderError name={shader.name} />}>
+            <ShaderErrorBoundary shaderName={shader.name} fallback={<ShaderError name={shader.name} />}>
               <Shader style={{ width: '100%', height: '100%' }}>
                 <Component {...props} />
               </Shader>
-            </ErrorBoundary>
+            </ShaderErrorBoundary>
           ) : shader.requiresChild ? (
-            <ErrorBoundary fallback={<ShaderError name={shader.name} />}>
+            <ShaderErrorBoundary shaderName={shader.name} fallback={<ShaderError name={shader.name} />}>
               <Shader style={{ width: '100%', height: '100%' }}>
                 <Component {...props}>
-                  <div style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    fontSize: '3rem',
-                    fontWeight: 'bold',
-                    fontFamily: 'system-ui',
-                  }}>
-                    {shader.name}
-                  </div>
+                  {/* Use Checkerboard shader as child for filter shaders - more visible transforms */}
+                  <Checkerboard
+                    colorA="#667eea"
+                    colorB="#3b2f63"
+                    cells={8}
+                  />
                 </Component>
               </Shader>
-            </ErrorBoundary>
+            </ShaderErrorBoundary>
           ) : (
             <div className="flex items-center justify-center h-full text-[#71717a]">
               Component not available
@@ -189,16 +182,3 @@ function ShaderError({ name }) {
   )
 }
 
-class ErrorBoundary extends React.Component {
-  constructor(props) {
-    super(props)
-    this.state = { hasError: false }
-  }
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-  render() {
-    if (this.state.hasError) return this.props.fallback
-    return this.props.children
-  }
-}

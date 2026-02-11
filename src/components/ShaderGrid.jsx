@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import ShaderPreview from './ShaderPreview'
 
 const categoryColors = {
   'Blurs': 'from-blue-500/20 to-cyan-500/20',
@@ -27,10 +28,17 @@ const ShaderCard = memo(({ shader, onSelect }) => {
       className="group relative bg-[#141416] border border-[#2a2a2e] rounded-xl overflow-hidden hover:border-violet-500/40 transition-all duration-200 text-left w-full hover:shadow-lg hover:shadow-violet-500/5"
     >
       {/* Preview area */}
-      <div className={`h-32 bg-gradient-to-br ${categoryColors[shader.category] || 'from-gray-500/20 to-zinc-500/20'} flex items-center justify-center`}>
-        <span className="text-4xl opacity-40 group-hover:opacity-60 transition-opacity">
-          {categoryIcons[shader.category] || '◆'}
-        </span>
+      <div className="h-32 bg-black rounded-t-xl overflow-hidden">
+        <ShaderPreview
+          shader={shader}
+          fallback={
+            <div className={`h-full w-full bg-gradient-to-br ${categoryColors[shader.category] || 'from-gray-500/20 to-zinc-500/20'} flex items-center justify-center`}>
+              <span className="text-4xl opacity-40 group-hover:opacity-60 transition-opacity">
+                {categoryIcons[shader.category] || '◆'}
+              </span>
+            </div>
+          }
+        />
       </div>
       
       {/* Info */}

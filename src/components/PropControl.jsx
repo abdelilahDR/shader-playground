@@ -70,9 +70,13 @@ const PropControl = memo(({ prop, value, onChange }) => {
           onChange={e => onChange(e.target.value)}
           className="w-full text-xs bg-[#141416] border border-[#2a2a2e] rounded px-2 py-1.5 text-white focus:outline-none focus:border-violet-500/50"
         >
-          {(options || []).map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
+          {(options || []).map(opt => {
+            const optValue = typeof opt === 'object' ? opt.value : opt
+            const optLabel = typeof opt === 'object' ? opt.label : opt
+            return (
+              <option key={optValue} value={optValue}>{optLabel}</option>
+            )
+          })}
         </select>
       </div>
     )
