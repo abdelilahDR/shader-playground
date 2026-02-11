@@ -1,15 +1,14 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { useMemo, useRef, useEffect } from 'react'
+import { useRef, useEffect, useMemo, forwardRef, useImperativeHandle } from 'react'
 import * as THREE from 'three'
 
 /**
- * ShaderMaterial - Renders a fullscreen shader with custom uniforms
+ * ShaderMesh - Renders a fullscreen shader with custom uniforms
  */
-function ShaderMesh({ fragmentShader, vertexShader, uniforms = {}, children }) {
+function ShaderMesh({ fragmentShader, vertexShader, uniforms = {} }) {
   const meshRef = useRef()
   const { size } = useThree()
 
-  // Default vertex shader for fullscreen quad
   const defaultVertexShader = `
     varying vec2 vUv;
     void main() {
@@ -18,24 +17,38 @@ function ShaderMesh({ fragmentShader, vertexShader, uniforms = {}, children }) {
     }
   `
 
-  // Merge default uniforms with custom uniforms
-  const shaderUniforms = useMemo(() => ({
-    uTime: { value: 0 },
-    uResolution: { value: new THREE.Vector2(size.width, size.height) },
-    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
-    ...uniforms
-  }), [uniforms, size])
+  const shaderUniforms = useMemo(() => {
+    const baseUniforms = {
+      uTime: { value: 0 },
+      uResolution: { value: new THREE.Vector2(size.width, size.height) },
+      uMouse: { value: new THREE.Vector2(0.5, 0.5) }
+    }
 
-  // Update time uniform on each frame
+    Object.keys(uniforms).forEach(key => {
+      baseUniforms[key] = { value: uniforms[key].value }
+    })
+
+    return baseUniforms
+  }, [])
+
+  useEffect(() => {
+    if (meshRef.current && meshRef.current.material) {
+      Object.keys(uniforms).forEach(key => {
+        if (meshRef.current.material.uniforms[key]) {
+          meshRef.current.material.uniforms[key].value = uniforms[key].value
+        }
+      })
+    }
+  }, [uniforms])
+
   useFrame((state) => {
-    if (meshRef.current) {
+    if (meshRef.current && meshRef.current.material) {
       meshRef.current.material.uniforms.uTime.value = state.clock.elapsedTime
     }
   })
 
-  // Update resolution on resize
   useEffect(() => {
-    if (meshRef.current) {
+    if (meshRef.current && meshRef.current.material) {
       meshRef.current.material.uniforms.uResolution.value.set(size.width, size.height)
     }
   }, [size])
@@ -44,6 +57,7 @@ function ShaderMesh({ fragmentShader, vertexShader, uniforms = {}, children }) {
     <mesh ref={meshRef}>
       <planeGeometry args={[2, 2]} />
       <shaderMaterial
+        key={fragmentShader}
         vertexShader={vertexShader || defaultVertexShader}
         fragmentShader={fragmentShader}
         uniforms={shaderUniforms}
@@ -53,22 +67,70 @@ function ShaderMesh({ fragmentShader, vertexShader, uniforms = {}, children }) {
 }
 
 /**
- * ShaderCanvas - Main wrapper component for rendering shaders
- * Replaces the 'shaders' package's <Shader> component
+ * CanvasExporter - Internal component to expose GL context for export
  */
-export default function ShaderCanvas({ children, style = {}, className = '' }) {
+function CanvasExporter({ onReady }) {
+  const { gl } = useThree()
+
+  useEffect(() => {
+    if (onReady) {
+      onReady(gl)
+    }
+  }, [gl, onReady])
+
+  return null
+}
+
+/**
+ * ShaderCanvas - Main wrapper component for rendering shaders
+ */
+const ShaderCanvas = forwardRef(function ShaderCanvas(
+  { children, style = {}, className = '', width, height },
+  ref
+) {
+  const glRef = useRef(null)
+
+  useImperativeHandle(ref, () => ({
+    // Export as PNG data URL
+    toDataURL: (type = 'image/png', quality = 1) => {
+      if (glRef.current) {
+        return glRef.current.domElement.toDataURL(type, quality)
+      }
+      return null
+    },
+    // Export as Blob
+    toBlob: (callback, type = 'image/png', quality = 1) => {
+      if (glRef.current) {
+        glRef.current.domElement.toBlob(callback, type, quality)
+      }
+    },
+    // Get canvas element
+    getCanvas: () => {
+      if (glRef.current) {
+        return glRef.current.domElement
+      }
+      return null
+    }
+  }))
+
+  const canvasStyle = {
+    width: width ? `${width}px` : '100%',
+    height: height ? `${height}px` : '100%'
+  }
+
   return (
     <div style={{ width: '100%', height: '100%', ...style }} className={className}>
       <Canvas
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, preserveDrawingBuffer: true }}
         camera={{ position: [0, 0, 1], fov: 75 }}
-        style={{ width: '100%', height: '100%' }}
+        style={canvasStyle}
       >
+        <CanvasExporter onReady={(gl) => { glRef.current = gl }} />
         {children}
       </Canvas>
     </div>
   )
-}
+})
 
-// Export the shader mesh for use in custom shaders
+export default ShaderCanvas
 export { ShaderMesh }

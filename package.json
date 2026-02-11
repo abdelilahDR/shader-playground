@@ -14,7 +14,6 @@
     "@tailwindcss/vite": "^4.1.18",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "shaders": "^2.3.52",
     "tailwindcss": "^4.1.18",
     "three": "^0.182.0"
   },
