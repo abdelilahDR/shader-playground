@@ -2367,7 +2367,7 @@ export const shaderComponents = [
       {
         "name": "url",
         "type": "image-upload",
-        "default": "https://shaders.com/sample.jpg",
+        "default": "https://picsum.photos/800/600",
         "description": "Upload an image or provide a URL",
         "group": "Media",
         "label": "Image"
@@ -4900,7 +4900,7 @@ export const shaderComponents = [
       {
         "name": "url",
         "type": "video-upload",
-        "default": "https://shaders.com/sample.mp4",
+        "default": "https://www.w3schools.com/html/mov_bbb.mp4",
         "description": "Upload a video or provide a URL",
         "group": "Media",
         "label": "Video"
